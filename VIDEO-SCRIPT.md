@@ -19,54 +19,54 @@ Then cut to a terminal prompt, blinking.
 
 ### Shot 2 — Baseline GoldRush x402 call, eating the cost (0:12–0:35)
 
-**On screen:** Run the direct call:
+**On screen:** Run the direct call against a chain the upstream rejects (with `GOLDRUSH_API_KEY` set, so it's a real Covalent error, not just the 402):
 
 ```
-$ node bin/goldrush.js -v call portfolio solana-mainnet So111...112
-GET https://x402.goldrush.dev/v1/solana-mainnet/address/So111...112/balances_v2/
-[goldrush] HTTP 402 Payment Required (310ms)
-[goldrush] x402: pay 0.0001 USDC on eip155:84532 to 0xA3…9de6
-[pact] classifier: payment_failed
-[baseline] no coverage — agent paid for the call and got payment_failed; nothing refunded.
+$ node bin/goldrush.js -v call portfolio solana-devnet So111...112
+GET https://api.covalenthq.com/v1/solana-devnet/address/So111...112/balances_v2/
+(no coverage — baseline; agent eats the cost on failure)
+[goldrush] HTTP 501 (110ms)
+[pact] classifier: server_error (upstream 501)
+[baseline] no coverage — agent paid for the call and got server_error; nothing refunded.
 $
 ```
 
-Let the cursor sit on the prompt for a beat. The silence is the point. (If you set `GOLDRUSH_API_KEY` the same line returns real Covalent data — for the contrast you want it to fail, so leave the key unset, or run it against a chain GoldRush rejects.)
+Let the cursor sit on the prompt for a beat. The silence is the point. (Without the key the same line hits `x402.goldrush.dev` and you see a real `402` instead — either way the agent paid and got nothing.)
 
 **VO:**
-"So I ask GoldRush for a wallet portfolio. It comes back four-oh-two — pay the micropayment, on Base, then retry. That's the x402 deal. But if anything goes wrong after I've paid — the upstream's down, the body comes back empty, wrong chain — I'm done. I paid, I got nothing, and there's nowhere to file that. Now picture an agent doing this a few thousand times a day. The failure rate doesn't have to be big for 'no recourse' to be the reason you don't uncap the budget."
+"So I ask GoldRush for a wallet portfolio. The upstream rejects it — five-oh-one, nothing back. With x402 I've already paid for that request. And if anything goes wrong after the payment — upstream down, empty body, wrong chain — I'm done. I paid, I got nothing, and there's nowhere to file that. Now picture an agent doing this a few thousand times a day. The failure rate doesn't have to be big for 'no recourse' to be the reason you don't uncap the budget."
 
 ---
 
 ### Shot 3 — `pact pay goldrush` — covered, then refunded (0:35–1:08)
 
-**On screen:** First the success path, then the failure path:
+**On screen:** First the *same failing call* from shot 2, now wrapped — refund fires. Then a call that works:
 
 ```
-$ node bin/goldrush.js -v pact pay goldrush portfolio solana-mainnet So111...112
-[pact] quote: principal 0.0010 USDC + premium 0.019 USDC (tier=ELEVATED, failureRate=1.2%)
-[pact] coverage paid on Solana: 2E1v…ExKU (settle_batch ~36s · SIMULATED)
-[pact] facilitator side-calls GoldRush on the agent's behalf… (chain seam handled here — agent only touched Solana)
-[goldrush] HTTP 200 (434ms)
-[pact] classifier: success (200, schema OK)
-[pact] settled: GoldRush receives 0.0010 USDC, Pact keeps premium 0.019 USDC
-
 $ node bin/goldrush.js -v pact pay goldrush portfolio solana-devnet So111...112
 [pact] quote: principal 0.0010 USDC + premium 0.019 USDC (tier=ELEVATED, failureRate=1.2%)
-[pact] coverage paid on Solana: TVkE…QN5e (settle_batch ~51s · SIMULATED)
-[pact] facilitator side-calls GoldRush on the agent's behalf…
-[goldrush] HTTP 400 (649ms)
-[pact] classifier: client_error (request rejected 400)
+[pact] coverage paid on Solana: uKhW…adNE (settle_batch ~33s · SIMULATED)
+[pact] facilitator side-calls GoldRush on the agent's behalf… (chain seam handled here — agent only touched Solana)
+[goldrush] HTTP 501 (87ms)
+[pact] classifier: server_error (upstream 501)
 [pact] policy: refund_on_failed_data
-[pact] refund 0.020 USDC -> agent: t3iV…GPTM (settle_batch ~36s · SIMULATED)
+[pact] refund 0.020 USDC -> agent: PwGR…9EQN (settle_batch ~50s · SIMULATED)
 [pact] principal + premium both refunded — Pact net $0.000 on this call
+
+$ node bin/goldrush.js -v pact pay goldrush portfolio solana-mainnet So111...112
+[pact] quote: principal 0.0010 USDC + premium 0.019 USDC (tier=ELEVATED, failureRate=1.2%)
+[pact] coverage paid on Solana: ceiy…quBH (settle_batch ~30s · SIMULATED)
+[pact] facilitator side-calls GoldRush on the agent's behalf…
+[goldrush] HTTP 200 (95ms)
+[pact] classifier: success (200, schema OK)
+[pact] settled: GoldRush receives 0.0010 USDC, Pact keeps premium 0.019 USDC
 $
 ```
 
-Highlight the `classifier:` lines and the final `net $0.000` line.
+Highlight the `classifier:` lines, the `refund … both refunded` line, and `net $0.000`.
 
 **VO:**
-"Same calls, wrapped. `pact pay goldrush`. I pay the call's price plus a small premium into a Pact pool on Solana, Pact's facilitator makes the GoldRush call for me — that's where the Base side gets handled, I never see it — and the classifier grades what comes back. First one's a clean two hundred: Pact passes the payment through, keeps the premium. Second one I point at a chain GoldRush rejects — four hundred. Classifier flags it, and Pact refunds me on Solana. Principal and premium, both back. Net cost: zero. Pact only keeps the premium when the call actually works. So my downside on a bad call is nothing, and GoldRush didn't have to change a line."
+"Same call, wrapped. `pact pay goldrush`. I pay the call's price plus a small premium into a Pact pool on Solana, Pact's facilitator makes the GoldRush call for me — that's where the Base side gets handled, I never see it — and the classifier grades what comes back. It's the same five-oh-one. The classifier flags it, and Pact refunds me on Solana. Principal and premium, both back. Net cost: zero. Then a call that works — clean two hundred — and Pact passes the payment through to GoldRush and keeps the premium. That's the deal: Pact only earns when the call actually works. So my downside on a bad call is nothing, and GoldRush didn't have to change a line."
 
 _(The Solana settlement here is simulated for the recording — every row says so (`SIMULATED` / `settlementSimulated: true`). The GoldRush 402 and the classifier are real. Say that in the VO if you want: "the on-chain settlement's simulated for this clip — the classifier rules and the instruction shape are the real ones Pact ships on mainnet.")_
 

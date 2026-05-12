@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Pact × GoldRush — side-by-side demo. Screen-record this (~30s).
 #
-# Shows: baseline GoldRush call (agent eats the cost) vs Pact-wrapped (coverage
-# on Solana + refund on failed data). Two outcomes: one success, one induced
-# failure (unsupported chain) so the refund path is visible.
+# Three acts: (1) baseline GoldRush call that fails — agent paid, got nothing,
+# no recourse; (2) the SAME failing call wrapped by Pact — refund of principal
+# + premium fires on Solana; (3) a call that works — Pact passes the payment
+# through and keeps the premium. Pact only earns when the call works.
 #
-# Real GoldRush calls (x402.goldrush.dev — you'll see the real 402). Pact's
-# Solana settlement is SIMULATED and labelled (settlementSimulated: true).
-# Set GOLDRUSH_API_KEY for real Covalent data on the success path.
+# Real GoldRush calls. With GOLDRUSH_API_KEY set you hit api.covalenthq.com
+# (real data / real upstream errors); without it you hit x402.goldrush.dev and
+# see the real 402. Pact's Solana settlement is SIMULATED and labelled
+# (settlementSimulated: true) — the classifier rules and instruction shape are
+# the ones Pact ships on mainnet.
 set -e
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -30,24 +33,24 @@ echo
 hr
 printf "\033[1m1. Baseline — agent calls GoldRush directly. No coverage.\033[0m\n"
 echo
-type_cmd "goldrush call portfolio solana-mainnet $ADDR"
-$CLI -v call portfolio solana-mainnet "$ADDR" >/dev/null
+type_cmd "goldrush call portfolio solana-devnet $ADDR    # upstream rejects -> agent paid, got nothing"
+$CLI -v call portfolio solana-devnet "$ADDR" >/dev/null || true
 echo
 sleep 2
 hr
-printf "\033[1m2. Wrapped — \033[36mpact pay goldrush\033[0m\033[1m. Coverage on Solana, success path.\033[0m\n"
-echo
-type_cmd "pact pay goldrush portfolio solana-mainnet $ADDR"
-# --force-success: green path without depending on a live API key for the recording.
-# Drop this flag (and set GOLDRUSH_API_KEY) for a fully-real success.
-$CLI -v --force-success pact pay goldrush portfolio solana-mainnet "$ADDR" >/dev/null
-echo
-sleep 2
-hr
-printf "\033[1m3. Wrapped — induced failure (unsupported chain). Refund fires.\033[0m\n"
+printf "\033[1m2. Wrapped — \033[36mpact pay goldrush\033[0m\033[1m, same failing call. Refund fires.\033[0m\n"
 echo
 type_cmd "pact pay goldrush portfolio solana-devnet $ADDR    # GoldRush rejects -> Pact refunds principal + premium"
 $CLI -v pact pay goldrush portfolio solana-devnet "$ADDR" >/dev/null
+echo
+sleep 2
+hr
+printf "\033[1m3. Wrapped — a call that works. Pact passes the payment through, keeps the premium.\033[0m\n"
+echo
+type_cmd "pact pay goldrush portfolio solana-mainnet $ADDR"
+# Without GOLDRUSH_API_KEY this falls back to a simulated 200 body; add --force-success
+# to guarantee the green path on the recording regardless of upstream.
+$CLI -v pact pay goldrush portfolio solana-mainnet "$ADDR" >/dev/null
 echo
 sleep 1
 hr
