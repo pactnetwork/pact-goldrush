@@ -2,7 +2,7 @@
 
 **Track:** Build with GoldRush (Frontier / Solana side track), Superteam Earn — https://superteam.fun/earn/listing/build-with-goldrush-track-powered-by-covalent
 **Team:** Pact Network
-**Repo:** https://github.com/quantum3labs/pact-monitor (this entry: `goldrush-track/`)
+**Repo:** https://github.com/pactnetwork/pact-goldrush
 **Demo video:** _[TODO: link]_
 **Pact mainnet program:** `5bCJcdWdK...` (Solana mainnet) · https://pactnetwork.io
 
@@ -56,7 +56,7 @@ Honest note on the seam: **GoldRush x402 itself settles on Base** (Base Sepolia 
 ## How to run the demo
 
 ```bash
-cd goldrush-track/cli
+cd cli
 npm install
 ./demo.sh           # records the baseline call and the wrapped call side by side, ~30s
 ```
@@ -74,7 +74,7 @@ node bin/pact-goldrush.js pact pay goldrush wallet-portfolio <chain> <address>
 Dashboard:
 
 ```bash
-cd goldrush-track/dashboard
+cd dashboard
 npm install && npm run dev   # open the local URL
 ```
 
@@ -88,9 +88,9 @@ npm install && npm run dev   # open the local URL
 
 ## Links
 
-- Repo (this entry): `goldrush-track/` in https://github.com/quantum3labs/pact-monitor
+- Repo (this entry): https://github.com/pactnetwork/pact-goldrush
 - Demo video: _[TODO]_
 - Pact Network: https://pactnetwork.io
 - Pact mainnet program: `5bCJcdWdK...` (Solana)
 - GoldRush x402: https://goldrush.dev/blog/goldrush-x402-blockchain-data-for-agents/
-- Pact market problem (the why, with sources): `MARKET-PROBLEM.md` in the repo root
+- Pact market problem (the why, with sources): `PLAN.md` and the Pact docs at pactnetwork.io
