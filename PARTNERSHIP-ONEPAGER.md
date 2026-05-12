@@ -13,7 +13,7 @@ We wrap a GoldRush x402 call in a Pact coverage flow:
 1. The agent runs `pact pay goldrush <endpoint>` instead of calling GoldRush directly.
 2. The agent pays the call's price plus a small premium into a Pact coverage pool on Solana.
 3. Pact's facilitator makes the GoldRush call (via GoldRush x402 — `402` → pay → retry → data).
-4. Pact's classifier reads the response — HTTP status, latency, whether the body matches the endpoint's schema — and tags it `success` / `client_error` / `server_error` / `timeout` / `schema_mismatch`.
+4. Pact's classifier reads the response — HTTP status, latency, whether the body matches the endpoint's schema — and tags it `success` / `client_error` / `server_error` / `timeout` / `schema_error`.
 5. On anything but `success`, Pact refunds the principal **and** the premium, on-chain, in seconds.
 6. On `success`, Pact keeps the premium. That's the only time we earn.
 

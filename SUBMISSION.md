@@ -20,28 +20,26 @@ That's fine when an agent is spending $0.31 on one call. It stops being fine the
 
 ## What we built
 
-In `goldrush-track/`:
+This repo:
 
-1. **`pact pay goldrush` — the wrapper CLI** (`goldrush-track/cli/`). It wraps a GoldRush call in a Pact coverage flow. The demo shows two paths side by side:
-   - **baseline:** a direct GoldRush x402 call. On a failed or garbage response, the agent has paid and has nothing.
-   - **wrapped:** `pact pay goldrush ...`. The agent pays principal + premium into a Pact pool on Solana; the facilitator side-calls GoldRush; the classifier reads the response (HTTP status, latency, whether the JSON shape matches the endpoint's schema) and tags it `success` / `client_error` / `server_error` / `timeout` / `schema_mismatch`; on anything but `success`, Pact settles a refund of principal + premium on-chain. The wrapped run's output continues past the error body into a settlement trail with a Solscan link.
-   - `demo.sh` records both in about 30 seconds.
+1. **`pact pay goldrush` — the wrapper CLI** (`cli/`). Zero dependencies, Node 20+. It wraps a GoldRush call in a Pact coverage flow. The demo shows two paths side by side:
+   - **baseline** (`goldrush call <endpoint> <chain> <address>`): a direct GoldRush x402 call. The CLI hits `x402.goldrush.dev`, gets a real `402 Payment Required` back, and — since nothing paid the 402 — the agent is left with `payment_failed` and nothing. (With a Covalent API key set, the same path returns real data from `api.covalenthq.com`.)
+   - **wrapped** (`pact pay goldrush <endpoint> <chain> <address>`): the agent pays principal + premium into a Pact coverage pool on Solana; Pact's facilitator side-calls GoldRush (this is where the chain seam is absorbed — the agent only touched Solana); the classifier reads the response — transport error/timeout → `timeout`, 5xx → `server_error`, unsatisfied 402 → `payment_failed`, 4xx → `client_error`, `200` with an error body → `provider_error`, `200` with a missing/malformed `data` field → `schema_error`, otherwise `success`; on anything but `success`, Pact refunds principal + premium on Solana via `settle_batch`. The wrapped run's output continues past the error into a settlement trail with an explorer link.
+   - `demo.sh` runs three acts back to back in ~30s: baseline (real 402, no recourse) → wrapped success → wrapped induced failure (`solana-devnet` → GoldRush rejects → refund fires). Each call appends a JSON row to `cli/pact-goldrush-calls.jsonl` — that's the dashboard's input. `cli/SPEC.md` is the canonical interface + JSON-shape contract.
 
-   > **TODO — reconcile exact commands.** As of this writing `goldrush-track/cli/` is being built; the command surface above is from the project plan. Once the CLI lands, sync the exact flags, output strings, and `demo.sh` steps here. The pattern is the same one shipped in `pact-cli` (`pact pay` already settles on-chain via Pact's pay-default pool on mainnet) and prototyped in `pact-pay-demo/` — this entry specializes it to GoldRush endpoints.
+2. **A mini dashboard** (`dashboard/`). One static page (`index.html`, no build step): the GoldRush calls Pact has covered — each row's endpoint, chain, principal, premium, status (`settled` / `refunded` / no-coverage), refund total, upstream latency, error. Summary tiles up top: total calls, settled, refunded, premium earned, total refunded. Pact brand. Ships with an illustrative sample dataset; point it at the CLI's `.jsonl` output to make it live (`?data=…` or swap the file — see `dashboard/README.md`).
 
-2. **A mini dashboard** (`goldrush-track/dashboard/`). One page: the GoldRush calls Pact has covered, each row's status (`settled` or `refunded`), premium earned, total refunded. Mock data first; wired to the CLI's output if time allows. Pact brand.
+3. **This writeup, a ~90s demo-video script** (`VIDEO-SCRIPT.md`) **and a partnership one-pager** (`PARTNERSHIP-ONEPAGER.md`) for the Covalent/GoldRush team, since the integration is additive and worth talking about whether or not it places in the track.
 
-3. **This writeup and a partnership one-pager** (`goldrush-track/PARTNERSHIP-ONEPAGER.md`) for the Covalent/GoldRush team, since the integration is additive and worth talking about whether or not it places in the track.
-
-**What's real vs. simulated in the demo:** the GoldRush x402 calls hit Base Sepolia testnet where we can wire them; Pact's coverage settlement is either a real Pact devnet pool (via the `pact-monitor` backend) or a faithful simulation that mirrors the real classifier rules and on-chain instruction shape — whichever the timeline allows, clearly labelled in the output. Nothing in the demo claims a settlement that didn't happen.
+**What's real vs. simulated in the demo:** the GoldRush x402 challenge is **real** — `x402.goldrush.dev` returns an actual `402` with `scheme=exact, network=eip155:84532` (Base Sepolia), the USDC contract, and a per-endpoint price (e.g. 0.0001 USDC on `balances_v2`, 0.02 on `transactions_v3`); with `GOLDRUSH_API_KEY` set the GoldRush *data* is real too (`api.covalenthq.com`). The classifier and the premium maths are real. **Simulated and clearly labelled** (`settlementSimulated: true` in every row): the Pact coverage payment + refund on Solana, and the per-provider reliability score that drives the premium tier. **Stubbed**: actually paying the Base-Sepolia 402 (one labelled function — needs a funded EVM key + `x402-fetch`). Nothing in the demo claims a settlement that didn't happen.
 
 ## How it uses GoldRush
 
 The wrapper targets GoldRush's published endpoints — the ones an agent actually wants per-call:
 
-- **Wallet Portfolio** (token balances + NFT holdings for an address) — the headline demo call.
-- **Activity Feed** (recent transactions / wallet activity) — second demo call, useful because a truncated activity list is a good example of "the call returned 200 but the data is garbage," which is exactly the `schema_mismatch` case the classifier exists to catch.
-- **Pricing** (token spot/historical price) — a third call to show it's not one-endpoint-specific.
+- **Wallet Portfolio** (`balances_v2` — token balances + holdings for an address) — the headline demo call.
+- **Activity Feed** (`transactions_v3` — recent transactions / wallet activity) — useful because a truncated activity list is a good example of "the call returned 200 but the data is garbage," which is exactly the `schema_error` case the classifier exists to catch.
+- **Pricing** (historical token price) — a third call to show it's not one-endpoint-specific.
 
 All of these are reached through **GoldRush x402**: the agent (here, Pact's facilitator) calls the endpoint with no API key, gets `402 Payment Required` with payment instructions, pays the stablecoin micropayment, retries with proof, and gets the data — the standard x402 request-response cycle GoldRush describes in their x402 launch post. Pact wraps that cycle: it's the thing that decides whether the data that came back was worth the payment, and refunds the agent if it wasn't.
 
@@ -55,30 +53,36 @@ Honest note on the seam: **GoldRush x402 itself settles on Base** (Base Sepolia 
 
 ## How to run the demo
 
+Node 20+, no dependencies to install.
+
 ```bash
 cd cli
-npm install
-./demo.sh           # records the baseline call and the wrapped call side by side, ~30s
+./demo.sh        # baseline → wrapped-success → wrapped-failure-with-refund, side by side, ~30s
 ```
 
-Single calls:
+Single calls (endpoints: `portfolio`, `activity`, `price`):
 
 ```bash
-# baseline: direct GoldRush x402 call — you eat the cost on failure
-node bin/pact-goldrush.js goldrush wallet-portfolio <chain> <address>
+# baseline: direct GoldRush x402 call — agent eats the cost on failure
+node bin/goldrush.js -v call portfolio solana-mainnet So11111111111111111111111111111111111111112
 
-# wrapped: Pact covers it — refund on failure
-node bin/pact-goldrush.js pact pay goldrush wallet-portfolio <chain> <address>
+# wrapped: Pact covers it — success path (release premium to provider)
+node bin/goldrush.js -v pact pay goldrush portfolio solana-mainnet So11111111111111111111111111111111111111112
+
+# wrapped: induced failure (unsupported chain) — Pact refunds principal + premium
+node bin/goldrush.js -v pact pay goldrush portfolio solana-devnet So11111111111111111111111111111111111111112
 ```
+
+Set `GOLDRUSH_API_KEY` (free tier at goldrush.dev) to make the success path return real Covalent data instead of a simulated body; without it you still get the real `402` challenge. Add `--json` for the machine-readable row only.
 
 Dashboard:
 
 ```bash
 cd dashboard
-npm install && npm run dev   # open the local URL
+npm run dev        # static server (npx serve); open the printed localhost URL
 ```
 
-> **TODO:** exact commands above are from the plan; reconcile with `goldrush-track/cli/` once it's built.
+It loads `dashboard/data/calls.sample.json` (illustrative rows). To run it against a live demo, run `./demo.sh` a few times and point the page at `cli/pact-goldrush-calls.jsonl` — see `dashboard/README.md`.
 
 ## Why it matters
 
