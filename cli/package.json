@@ -1,0 +1,20 @@
+{
+  "name": "pact-pay-goldrush",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pact Network coverage for Covalent GoldRush x402 data calls — data-or-your-money-back for AI agents.",
+  "bin": {
+    "pact-pay-goldrush": "./bin/goldrush.js"
+  },
+  "scripts": {
+    "demo": "./demo.sh",
+    "baseline": "node bin/goldrush.js -v call portfolio solana-mainnet So11111111111111111111111111111111111111112",
+    "wrapped": "node bin/goldrush.js -v pact pay goldrush portfolio solana-mainnet So11111111111111111111111111111111111111112",
+    "fail": "node bin/goldrush.js -v pact pay goldrush portfolio solana-devnet So11111111111111111111111111111111111111112"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT",
+  "homepage": "https://pactnetwork.io",
+  "keywords": ["pact", "goldrush", "covalent", "x402", "solana", "agents", "insurance", "refund"]
+}

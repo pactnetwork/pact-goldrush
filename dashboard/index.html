@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GoldRush calls covered by Pact</title>
+  <meta name="description" content="Every GoldRush x402 call here is wrapped by Pact — if it fails, the agent gets principal + premium back." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inria+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Inria+Sans:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap" />
+  <style>
+    :root {
+      --primary: #B87333;
+      --tertiary: #C9553D;
+      --bg: #151311;
+      --surface-low: #1d1b19;
+      --surface: #211f1d;
+      --surface-high: #2c2927;
+      --on-surface: #e8e1dd;
+      --on-surface-variant: #d8c3b4;
+      --outline: #a08d80;
+      --outline-variant: #524439;
+      --status-green: #4ade80;
+      --status-green-bg: rgba(74, 222, 128, 0.12);
+      --status-green-border: rgba(74, 222, 128, 0.35);
+      --status-amber: #facc15;
+      --status-amber-bg: rgba(250, 204, 21, 0.12);
+      --status-amber-border: rgba(250, 204, 21, 0.35);
+      --refund-row-bg: rgba(201, 85, 61, 0.10);
+      --refund-row-border: rgba(201, 85, 61, 0.45);
+      --font-serif: "Inria Serif", Georgia, serif;
+      --font-sans: "Inria Sans", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--on-surface); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+    body { line-height: 1.5; padding: 2rem 1.25rem 4rem; }
+    .wrap { max-width: 1200px; margin: 0 auto; }
+
+    /* Header */
+    header { display: flex; align-items: flex-start; gap: 0.9rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--outline-variant); margin-bottom: 1.75rem; }
+    .mark { flex: none; width: 38px; height: 38px; border: 1.5px solid var(--primary); display: grid; place-items: center; }
+    .mark span { font-family: var(--font-serif); font-style: italic; font-weight: 700; font-size: 24px; color: var(--primary); line-height: 1; }
+    .titles h1 { font-family: var(--font-serif); font-weight: 700; font-size: clamp(1.4rem, 3.5vw, 1.85rem); letter-spacing: -0.01em; }
+    .titles .kicker { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--primary); margin-bottom: 0.35rem; }
+    .titles p { color: var(--on-surface-variant); font-size: 0.95rem; max-width: 62ch; margin-top: 0.4rem; }
+    .titles p b { color: var(--on-surface); font-weight: 700; }
+
+    /* Tiles */
+    .tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; border: 1px solid var(--outline-variant); margin-bottom: 2rem; }
+    .tile { padding: 1rem 1.1rem; border-right: 1px solid var(--outline-variant); }
+    .tile:last-child { border-right: none; }
+    .tile .label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-surface-variant); }
+    .tile .value { font-family: var(--font-serif); font-weight: 700; font-size: 1.7rem; margin-top: 0.35rem; line-height: 1; }
+    .tile .sub { font-family: var(--font-mono); font-size: 0.7rem; color: var(--outline); margin-top: 0.3rem; }
+    .tile.accent .value { color: var(--primary); }
+    .tile.warn .value { color: var(--tertiary); }
+
+    /* Section heading */
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .section-head h2 { font-family: var(--font-serif); font-weight: 700; font-size: 1.05rem; }
+    .section-head .src { font-family: var(--font-mono); font-size: 0.7rem; color: var(--outline); }
+    .section-head .src code { color: var(--on-surface-variant); }
+
+    /* Table */
+    .table-scroll { border: 1px solid var(--outline-variant); overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 1020px; font-size: 0.84rem; }
+    thead th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.11em; text-transform: uppercase; color: var(--on-surface-variant); text-align: left; padding: 0.65rem 0.75rem; background: var(--surface-low); border-bottom: 1px solid var(--outline-variant); white-space: nowrap; }
+    thead th.num { text-align: right; }
+    tbody td { padding: 0.62rem 0.75rem; border-bottom: 1px solid var(--outline-variant); vertical-align: middle; white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--surface-low); }
+    td.num { text-align: right; font-family: var(--font-mono); font-size: 0.8rem; }
+    td.mono { font-family: var(--font-mono); font-size: 0.78rem; color: var(--on-surface-variant); }
+    .endpoint-name { font-weight: 700; }
+    .err { color: var(--tertiary); font-family: var(--font-mono); font-size: 0.78rem; white-space: normal; }
+    td.errcol { white-space: normal; min-width: 130px; }
+    .dim { color: var(--outline); }
+
+    /* Refunded row stands out */
+    tbody tr.refunded td { background: var(--refund-row-bg); }
+    tbody tr.refunded:hover td { background: rgba(201, 85, 61, 0.16); }
+    tbody tr.refunded td:first-child { box-shadow: inset 3px 0 0 var(--refund-row-border); }
+
+    /* Badges */
+    .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.22rem 0.5rem; border: 1px solid; }
+    .badge.settled { color: var(--status-green); background: var(--status-green-bg); border-color: var(--status-green-border); }
+    .badge.refunded { color: var(--status-amber); background: var(--status-amber-bg); border-color: var(--status-amber-border); }
+
+    .latency-warn { color: var(--status-amber); }
+
+    footer { margin-top: 2.5rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--outline); border-top: 1px solid var(--outline-variant); padding-top: 1rem; }
+    footer a { color: var(--on-surface-variant); }
+
+    .empty { padding: 2.5rem; text-align: center; color: var(--outline); font-family: var(--font-mono); font-size: 0.85rem; }
+
+    @media (max-width: 860px) {
+      .tiles { grid-template-columns: repeat(2, 1fr); }
+      .tile { border-bottom: 1px solid var(--outline-variant); }
+      .tile:nth-child(2n) { border-right: none; }
+      .tile:nth-last-child(-1n+1) { border-bottom: none; }
+      .tile:nth-child(5) { grid-column: 1 / -1; border-bottom: none; }
+    }
+    @media (max-width: 520px) {
+      body { padding: 1.25rem 0.9rem 3rem; }
+      .titles h1 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="mark" aria-hidden="true"><span>P</span></div>
+      <div class="titles">
+        <div class="kicker">Pact Network × GoldRush</div>
+        <h1>GoldRush calls covered by Pact</h1>
+        <p>Every GoldRush x402 call here is wrapped by Pact — if it fails, the agent gets <b>principal + premium</b> back.</p>
+      </div>
+    </header>
+
+    <section class="tiles" id="tiles" aria-label="Summary"></section>
+
+    <div class="section-head">
+      <h2>Covered calls</h2>
+      <div class="src">source: <code id="src-label">data/calls.sample.json</code></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>GoldRush endpoint</th>
+            <th>Chain</th>
+            <th class="num">Principal</th>
+            <th class="num">Premium</th>
+            <th>Status</th>
+            <th class="num">Refund total</th>
+            <th class="num">Upstream latency</th>
+            <th>Error</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <footer>
+      Data-or-your-money-back for agent API calls. &nbsp;·&nbsp;
+      Pact earns the premium only on successful calls; refunded calls return principal + premium, net $0.000 to Pact. &nbsp;·&nbsp;
+      <a href="https://pactnetwork.io" rel="noopener">pactnetwork.io</a>
+    </footer>
+  </div>
+
+  <script>
+    const ENDPOINT_LABELS = {
+      "wallet-portfolio": "Wallet Portfolio",
+      "activity-feed": "Activity Feed",
+      "pricing": "Pricing"
+    };
+
+    const fmtUsd = (n, dp = 4) => "$" + Number(n).toFixed(dp);
+    const fmtTime = (ts) => {
+      const d = new Date(ts);
+      if (isNaN(d)) return String(ts);
+      const date = d.toLocaleDateString(undefined, { month: "short", day: "2-digit" });
+      const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+      return `${date} · ${time}`;
+    };
+    const fmtLatency = (ms) => {
+      if (ms == null) return "—";
+      if (ms === 0) return "n/a";
+      if (ms >= 1000) return (ms / 1000).toFixed(ms >= 10000 ? 0 : 1) + "s";
+      return ms + "ms";
+    };
+
+    function dataUrl() {
+      const p = new URLSearchParams(location.search).get("data");
+      return p && p.trim() ? p.trim() : "data/calls.sample.json";
+    }
+
+    function renderTiles(calls) {
+      const settled = calls.filter(c => c.status === "settled");
+      const refunded = calls.filter(c => c.status === "refunded");
+      const premiumEarned = settled.reduce((s, c) => s + (c.premium || 0), 0);
+      const totalRefunded = refunded.reduce((s, c) => s + (c.refundTotal || 0), 0);
+      const tiles = [
+        { label: "Total calls", value: calls.length, sub: "GoldRush x402 via Pact" },
+        { label: "Settled", value: settled.length, sub: "data delivered", cls: "" },
+        { label: "Refunded", value: refunded.length, sub: "principal + premium back", cls: "warn" },
+        { label: "Premium earned", value: fmtUsd(premiumEarned), sub: "on settled calls only", cls: "accent" },
+        { label: "Total refunded", value: fmtUsd(totalRefunded), sub: "paid back to agents", cls: "warn" }
+      ];
+      document.getElementById("tiles").innerHTML = tiles.map(t => `
+        <div class="tile ${t.cls || ""}">
+          <div class="label">${t.label}</div>
+          <div class="value">${t.value}</div>
+          <div class="sub">${t.sub}</div>
+        </div>`).join("");
+    }
+
+    function renderRows(calls) {
+      const tbody = document.getElementById("rows");
+      if (!calls.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty">No calls in this dataset.</td></tr>`;
+        return;
+      }
+      const sorted = [...calls].sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      tbody.innerHTML = sorted.map(c => {
+        const refunded = c.status === "refunded";
+        const epLabel = ENDPOINT_LABELS[c.endpoint] || c.endpoint || "—";
+        const lateOk = !refunded && c.upstreamLatencyMs >= 1000;
+        return `
+        <tr class="${refunded ? "refunded" : ""}">
+          <td class="mono">${fmtTime(c.ts)}</td>
+          <td><span class="endpoint-name">${epLabel}</span> <span class="dim mono">${c.endpoint || ""}</span></td>
+          <td class="mono">${c.chain || "—"}</td>
+          <td class="num">${fmtUsd(c.principal)}</td>
+          <td class="num">${fmtUsd(c.premium)}</td>
+          <td><span class="badge ${refunded ? "refunded" : "settled"}">${refunded ? "Refunded" : "Settled"}</span></td>
+          <td class="num">${c.refundTotal ? fmtUsd(c.refundTotal) : '<span class="dim">—</span>'}</td>
+          <td class="num ${lateOk ? "latency-warn" : ""}">${fmtLatency(c.upstreamLatencyMs)}</td>
+          <td class="errcol">${refunded && c.error ? `<span class="err">${c.error}</span>` : '<span class="dim">—</span>'}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    async function main() {
+      const url = dataUrl();
+      document.getElementById("src-label").textContent = url;
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(res.status + " " + res.statusText);
+        const data = await res.json();
+        const calls = Array.isArray(data) ? data : (Array.isArray(data.calls) ? data.calls : []);
+        renderTiles(calls);
+        renderRows(calls);
+      } catch (e) {
+        document.getElementById("tiles").innerHTML = `<div class="tile" style="grid-column:1/-1"><div class="label">Error</div><div class="value" style="font-size:1rem;color:var(--tertiary)">Could not load ${url}</div><div class="sub">${e.message} — serve over http (npx serve), not file://</div></div>`;
+        document.getElementById("rows").innerHTML = `<tr><td colspan="9" class="empty">No data.</td></tr>`;
+      }
+    }
+    main();
+  </script>
+</body>
+</html>

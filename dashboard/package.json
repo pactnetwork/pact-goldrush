@@ -1,0 +1,10 @@
+{
+  "name": "pact-goldrush-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mini dashboard: GoldRush x402 calls covered by Pact (settled / refunded, premium, refund totals).",
+  "scripts": {
+    "dev": "npx --yes serve@14 -l 4178 .",
+    "start": "npx --yes serve@14 -l 4178 ."
+  }
+}

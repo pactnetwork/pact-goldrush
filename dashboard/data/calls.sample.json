@@ -1,0 +1,14 @@
+[
+  { "id": "gr_8f3a21", "ts": 1747044000000, "endpoint": "wallet-portfolio", "chain": "solana-mainnet", "principal": 0.0020, "premium": 0.00020, "status": "settled", "refundTotal": 0, "upstreamLatencyMs": 238, "error": null },
+  { "id": "gr_8f3a22", "ts": 1747044072000, "endpoint": "activity-feed", "chain": "solana-mainnet", "principal": 0.0015, "premium": 0.00015, "status": "settled", "refundTotal": 0, "upstreamLatencyMs": 411, "error": null },
+  { "id": "gr_8f3a23", "ts": 1747044141000, "endpoint": "pricing", "chain": "base-mainnet", "principal": 0.0010, "premium": 0.00010, "status": "settled", "refundTotal": 0, "upstreamLatencyMs": 173, "error": null },
+  { "id": "gr_8f3a24", "ts": 1747044203000, "endpoint": "wallet-portfolio", "chain": "eth-mainnet", "principal": 0.0020, "premium": 0.00020, "status": "refunded", "refundTotal": 0.00220, "upstreamLatencyMs": 0, "error": "unsupported chain" },
+  { "id": "gr_8f3a25", "ts": 1747044280000, "endpoint": "activity-feed", "chain": "solana-mainnet", "principal": 0.0015, "premium": 0.00015, "status": "settled", "refundTotal": 0, "upstreamLatencyMs": 355, "error": null },
+  { "id": "gr_8f3a26", "ts": 1747044349000, "endpoint": "pricing", "chain": "solana-mainnet", "principal": 0.0010, "premium": 0.00010, "status": "settled", "refundTotal": 0, "upstreamLatencyMs": 198, "error": null },
+  { "id": "gr_8f3a27", "ts": 1747044410000, "endpoint": "wallet-portfolio", "chain": "solana-mainnet", "principal": 0.0020, "premium": 0.00020, "status": "refunded", "refundTotal": 0.00220, "upstreamLatencyMs": 5021, "error": "upstream 503" },
+  { "id": "gr_8f3a28", "ts": 1747044488000, "endpoint": "activity-feed", "chain": "polygon-mainnet", "principal": 0.0015, "premium": 0.00015, "status": "settled", "refundTotal": 0, "upstreamLatencyMs": 472, "error": null },
+  { "id": "gr_8f3a29", "ts": 1747044551000, "endpoint": "pricing", "chain": "solana-mainnet", "principal": 0.0010, "premium": 0.00010, "status": "refunded", "refundTotal": 0.00110, "upstreamLatencyMs": 612, "error": "malformed response" },
+  { "id": "gr_8f3a2a", "ts": 1747044619000, "endpoint": "wallet-portfolio", "chain": "solana-mainnet", "principal": 0.0020, "premium": 0.00020, "status": "settled", "refundTotal": 0, "upstreamLatencyMs": 263, "error": null },
+  { "id": "gr_8f3a2b", "ts": 1747044690000, "endpoint": "activity-feed", "chain": "solana-mainnet", "principal": 0.0015, "premium": 0.00015, "status": "refunded", "refundTotal": 0.00165, "upstreamLatencyMs": 30000, "error": "timeout" },
+  { "id": "gr_8f3a2c", "ts": 1747044758000, "endpoint": "pricing", "chain": "base-mainnet", "principal": 0.0010, "premium": 0.00010, "status": "settled", "refundTotal": 0, "upstreamLatencyMs": 156, "error": null }
+]
